@@ -18,7 +18,7 @@ Runs entirely in the terminal. All data is stored locally in CSV and JSON files 
 ```bash
 python seed_data.py
 ```
-This writes 25 sample transactions, 6 budget rules, and a sample profile so you can explore summaries and alerts immediately.
+Writes a sample profile, balances, 6 budget rules, and 27 transactions (mix of debits and credits) so you can explore all features immediately.
 
 **2. Launch the app:**
 ```bash
@@ -30,70 +30,101 @@ If no config file exists, the setup wizard runs automatically before showing the
 
 ## First-Time Setup
 
-If `config.json` is missing, the app walks you through a one-time setup wizard covering:
+The setup wizard runs once on first launch (or any time you choose "Re-run first-time setup" from Settings). Steps:
 
-1. Your name and university
-2. Monthly income or allowance
-3. Monthly savings goal and what you're saving for
-4. Spending categories (use defaults or define your own)
-5. Want/need classification per category
-6. Optional spending limits per category
-7. Account names and opening balances
+1. **Your profile** — name and university
+2. **Setup style** — choose between:
+   - **Default** — preset categories applied instantly, no further prompts
+   - **Custom** — you enter every debit category, classify each as want/need, and enter income categories from scratch
+3. **Budget limits** (optional) — set a spending cap per category with a daily, weekly, or monthly period
+4. **Accounts & opening balances** — name your accounts (e.g. Octopus, HSBC, Cash) and set their current balances
 
-You can update any of these later from **Settings** in the main menu.
+All settings can be updated later from the **Settings** menu.
+
+> **Tip:** Values shown in `[brackets]` are defaults — press Enter to accept.
+> In `Y/n` prompts the **CAPITAL** letter is the default (e.g. `Y/n` → Enter = Yes).
 
 ---
 
 ## Main Menu
 
 ```
-1. Add transaction          — record a new expense
-2. View summaries & reports — breakdowns, trends, history
-3. Budget rules & alerts    — manage limits and check status
-4. Account balances         — view all account balances
+1. Add transaction           — record a new debit or credit
+2. View summaries & reports  — breakdowns, trends, history
+3. Budget rules & alerts     — manage limits and check status
+4. Account balances          — view all account balances
 5. Manual balance adjustment — set an account's balance directly
-6. Settings                 — categories, income, goals, rules
+6. Settings                  — categories, budget rules, re-run setup
 7. Quit
 ```
 
+---
+
 ### Adding a Transaction
 
-You will be prompted for:
-- **Date** — defaults to today, format `YYYY-MM-DD`
-- **Amount** — in HKD
-- **Category** — choose from your list or enter a new one
-- **Account** — e.g. Octopus, HSBC, Cash
-- **Description** — optional note
-- **Want / Need** — auto-classified from your setup preferences; you can override
+First choose the transaction type:
+- **Debit (expenditure)** — money going out; uses your spending categories
+- **Credit (income)** — money coming in; uses your income categories
 
-After saving, the app immediately checks all budget rules and prints a warning if any limit is breached.
+Then fill in:
+| Field | Notes |
+|---|---|
+| Date | Defaults to today (`YYYY-MM-DD`) |
+| Amount | HKD, must be > 0 |
+| Category | Choose from your list or enter a new one |
+| Account | Choose from your accounts or enter a new one |
+| Description | Optional free-text note |
+| Want / Need | Debit only — auto-classified from setup; you can override |
+
+On save the account balance updates automatically (debit subtracts, credit adds) and all budget rules are checked immediately.
+
+---
 
 ### Summaries & Reports
 
 | Option | What it shows |
 |---|---|
-| Period summary | Total spent, category breakdown, top 3 categories for a chosen period |
-| 7-day trend | Last 7 days vs previous 7 days with % change |
-| Monthly history | Total spending per calendar month |
+| Period summary | Total spent, want/need split, category breakdown with bar chart for any date range |
+| 7-day trend | Last 7 days vs previous 7 days with % change and per-category bars |
+| Monthly history | Total spending per calendar month with bar chart |
 | Daily breakdown | Day-by-day spending for the current month |
-| Savings progress | Income vs spending vs your savings goal |
 | Recent transactions | Last 10 / 20 / 30 / all transactions |
+
+---
 
 ### Budget Rules
 
-Each rule sets a spending limit for a category over a daily, weekly, or monthly period.
-- **View all rules** — shows limit, period, and current status
-- **Add / update rule** — set or overwrite a rule for any category
-- **Remove rule** — delete a rule
-- **Check current status** — table showing spent vs limit for every rule right now
+Each rule defines a spending cap for a category over a daily, weekly, or monthly period.
 
-A breach warning is printed automatically after every new transaction that pushes a category over its limit.
+| Option | Description |
+|---|---|
+| View all rules | Shows limit, period, and current status for every rule |
+| Add / update rule | Set or overwrite a rule for any category |
+| Remove rule | Delete a rule |
+| Check current status | Table: spent vs limit vs remaining for every rule right now |
+
+A breach warning prints automatically after any transaction that pushes a category over its limit. The dashboard also shows active breaches every time you return to the main menu.
+
+---
+
+### Account Balances
+
+Displays each account with its current balance and a total. Balances update automatically whenever a transaction is saved.
 
 ### Manual Balance Adjustment
 
-Updates an account's stored balance without creating a transaction record. Use this for:
-- Setting an opening balance when you first add an account
-- Correcting a balance after a bank transfer or cash withdrawal
+Set an account's balance directly without creating a transaction record. Use this to correct drift (e.g. after a bank transfer, ATM withdrawal, or interest credit).
+
+---
+
+### Settings
+
+| Option | Description |
+|---|---|
+| Manage debit categories | Add or remove spending categories |
+| Manage income (credit) categories | Add or remove income categories |
+| Manage budget rules | Full rules menu |
+| Re-run first-time setup | Walks through setup again; existing transaction data is kept |
 
 ---
 
@@ -101,32 +132,32 @@ Updates an account's stored balance without creating a transaction record. Use t
 
 | File | Purpose |
 |---|---|
-| `main.py` | Entry point. Loads all data on startup, runs the main menu loop, and coordinates between modules. |
-| `data.py` | All file I/O. Reads and writes `transactions.csv`, `rules.csv`, `balances.json`, and `config.json`. Every other module calls this to load or persist data. |
-| `transactions.py` | Transaction logic. Handles the add-transaction prompt flow, want/need auto-classification, and filtering/querying functions used by summaries and rules. |
-| `summaries.py` | Statistics and reporting. Computes category breakdowns, daily/weekly/monthly totals, the 7-day trend, savings progress, and renders all the report views. |
-| `rules.py` | Budget rule engine. Checks all rules against current transaction data and prints alerts. Also provides the interactive menu for adding, removing, and viewing rules. |
-| `setup.py` | First-run wizard and settings helpers. Collects profile info, categories, want/need classification, and initial budget rules. Also exposes `update_categories` and `update_savings_goal` used by the Settings menu. |
-| `utils.py` | Shared helpers used across every module: input prompts with validation, date/amount formatting, re-prompt loops, and terminal output utilities. |
-| `seed_data.py` | One-time data seeder. Writes sample config, balances, rules, and 25 transactions so you can test the app without entering data manually. Safe to delete after use. |
+| `main.py` | Entry point. Loads all data, runs the main menu loop, coordinates all modules. |
+| `data.py` | All file I/O. Reads/writes `transactions.csv`, `rules.csv`, `balances.json`, `config.json`. |
+| `transactions.py` | Transaction logic: add-transaction flow, want/need classification, all filter/query functions. |
+| `summaries.py` | Statistics and reporting: category breakdowns, trend analysis, monthly/daily totals, all report views. |
+| `rules.py` | Budget rule engine: checks rules against transaction data, prints alerts, manages the rules menu. |
+| `setup.py` | First-run wizard and post-setup helpers (`update_categories`, `update_credit_categories`). |
+| `utils.py` | Shared helpers: validated input prompts, amount/date formatting, terminal output utilities. |
+| `seed_data.py` | One-time data seeder. Safe to delete after use. |
 
-## Data Files (auto-generated)
+---
+
+## Data Files (auto-generated, gitignored)
 
 | File | Format | Contents |
 |---|---|---|
-| `config.json` | JSON | User profile, categories, want/need lists, income, savings goal, account names |
-| `transactions.csv` | CSV | All recorded transactions: date, amount, category, account, description, type |
+| `config.json` | JSON | Profile, debit categories, income categories, want/need lists, account names |
+| `transactions.csv` | CSV | All transactions: date, amount, category, account, description, type, direction |
 | `rules.csv` | CSV | Budget rules: category, limit amount, period |
-| `balances.json` | JSON | Current balance for each account |
-
-These files are created automatically when you run the app or the seed script. They are listed in `.gitignore` so personal financial data is not accidentally committed to version control.
+| `balances.json` | JSON | Current balance per account |
 
 ---
 
 ## Input Validation
 
 All prompts validate input and re-ask on bad values — the app will never crash from invalid input:
-- Dates must be in `YYYY-MM-DD` format
-- Amounts must be positive numbers
-- Menu choices must be a listed number; typing anything else shows an error and re-prompts
-- Required fields cannot be left blank
+- Dates must be `YYYY-MM-DD`
+- Amounts must be numeric and meet the minimum (usually > 0)
+- Menu choices must be a listed number
+- Required fields (e.g. name) cannot be left blank
