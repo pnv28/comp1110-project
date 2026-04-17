@@ -1,11 +1,11 @@
 """Add and query transactions."""
 
 from datetime import date, timedelta
-from data import append_transaction, save_transactions
+from data import append_transaction, save_transactions, save_balances
 from utils import (
     header, section, divider, fmt_amount, fmt_date,
     prompt, prompt_required, prompt_float, prompt_date,
-    prompt_choice, prompt_yes_no, pause
+    prompt_choice, prompt_yes_no, pause, DEFAULT_HINT
 )
 
 
@@ -20,16 +20,18 @@ def classify(category: str, cfg: dict) -> str:
 
 # ── Add transaction ───────────────────────────────────────────────────────────
 
-def add_transaction(transactions: list[dict], cfg: dict) -> list[dict]:
+def add_transaction(transactions: list[dict], cfg: dict,
+                    balances: dict[str, float]) -> tuple[list[dict], dict[str, float]]:
     """Prompt for transaction details, confirm, and persist."""
     print(header("Add Transaction"))
+    print(DEFAULT_HINT)
 
     accounts = cfg.get("accounts", ["Cash"])
 
     # Direction
-    direction = prompt_choice("Type", ["Debit (money out)", "Credit (money in)"],
-                              default="Debit (money out)")
-    is_debit = direction.startswith("Debit")
+    direction = prompt_choice("Type", ["Debit (expenditure)", "Credit (income)"],
+                              default="Debit (expenditure)")
+    is_debit = "expenditure" in direction or direction.lower().startswith("debit")
     direction_key = "debit" if is_debit else "credit"
 
     # Date
@@ -80,12 +82,23 @@ def add_transaction(transactions: list[dict], cfg: dict) -> list[dict]:
     if not prompt_yes_no("\n  Save this transaction?", default=True):
         print("  Transaction discarded.")
         pause()
-        return transactions
+        return transactions, balances
 
     transactions = append_transaction(txn, transactions)
+
+    # Update account balance
+    current = balances.get(account, 0.0)
+    if is_debit:
+        balances[account] = current - amount
+    else:
+        balances[account] = current + amount
+    save_balances(balances)
+
     label = "DEBIT" if is_debit else "CREDIT"
+    new_bal = balances[account]
     print(f"\n  ✓ Transaction saved. ({label} · {fmt_amount(amount)} · {category})")
-    return transactions
+    print(f"  {account} balance: {fmt_amount(new_bal)}")
+    return transactions, balances
 
 
 # ── Display helpers ───────────────────────────────────────────────────────────

@@ -12,7 +12,7 @@ import setup as setup_module
 from transactions import add_transaction, view_recent
 from summaries import (
     view_period_summary, view_trend, view_monthly_history,
-    view_daily_breakdown, view_savings_progress
+    view_daily_breakdown
 )
 from rules import (
     manage_rules_menu, check_and_print_alerts, check_rules, print_alerts
@@ -90,23 +90,21 @@ def settings_menu(cfg: dict, rules: list[dict],
         print(header("Settings"))
         print("  1. Manage debit categories")
         print("  2. Manage income (credit) categories")
-        print("  3. Update savings goal")
-        print("  4. Manage budget rules")
-        print("  5. Re-run first-time setup")
-        print("  6. Back")
+        print("  3. Manage budget rules")
+        print("  4. Re-run first-time setup")
+        print("  5. Back")
         choice = input("\n  > ").strip()
         if choice == "1":
             cfg = setup_module.update_categories(cfg)
         elif choice == "2":
             cfg = setup_module.update_credit_categories(cfg)
         elif choice == "3":
-            cfg = setup_module.update_savings_goal(cfg)
-        elif choice == "4":
             rules = manage_rules_menu(rules, transactions, cfg)
-        elif choice == "5":
+        elif choice == "4":
             if prompt_yes_no("Re-run full setup? (your data is kept)", default=False):
                 cfg = setup_module.run_setup()
-        elif choice == "6":
+                rules = load_rules()
+        elif choice == "5":
             break
     return cfg, rules
 
@@ -120,9 +118,8 @@ def summaries_menu(transactions: list[dict], cfg: dict) -> None:
         print("  2. 7-day trend")
         print("  3. Monthly history")
         print("  4. Daily breakdown (this month)")
-        print("  5. Savings progress")
-        print("  6. Recent transactions")
-        print("  7. Back")
+        print("  5. Recent transactions")
+        print("  6. Back")
         choice = input("\n  > ").strip()
         if choice == "1":
             view_period_summary(transactions, cfg)
@@ -133,10 +130,8 @@ def summaries_menu(transactions: list[dict], cfg: dict) -> None:
         elif choice == "4":
             view_daily_breakdown(transactions)
         elif choice == "5":
-            view_savings_progress(transactions, cfg)
-        elif choice == "6":
             view_recent(transactions, cfg)
-        elif choice == "7":
+        elif choice == "6":
             break
 
 
@@ -159,18 +154,23 @@ def print_dashboard(cfg: dict, transactions: list[dict],
     print(f"    Transactions   : {len(month_txns)}")
     print(f"    Total spent    : {fmt_amount(month_total)}")
 
-    # Active rule breaches
-    alerts = check_rules(transactions, rules)
-    if alerts:
-        print(f"\n  ⚠  {len(alerts)} budget rule(s) currently breached!")
-    else:
-        print(f"\n  ✓  All budget rules are within limits.")
-
     # Account balances summary
     accs = cfg.get("accounts", [])
     if balances:
         total_bal = sum(balances.get(a, 0.0) for a in accs)
-        print(f"\n  Total balance      : {fmt_amount(total_bal)}")
+        print(f"  Total balance      : {fmt_amount(total_bal)}")
+
+    # Budget rule alerts
+    alerts = check_rules(transactions, rules)
+    print()
+    if alerts:
+        print(f"  ⚠  Budget breaches ({len(alerts)}):")
+        for a in alerts:
+            print(f"    • {a['category']:<20} over by {fmt_amount(a['overspent'])}"
+                  f"  [{a['period']}]")
+    else:
+        print(f"  ✓  All budget rules within limits.")
+
 
 
 # ── Main menu ─────────────────────────────────────────────────────────────────
@@ -204,7 +204,7 @@ def main() -> None:
         choice = input("  > ").strip()
 
         if choice == "1":
-            transactions = add_transaction(transactions, cfg)
+            transactions, balances = add_transaction(transactions, cfg, balances)
             # Check budget rules immediately after adding
             check_and_print_alerts(transactions, rules)
             pause()

@@ -98,19 +98,6 @@ def top_categories(transactions: list[dict], n: int = 3) -> list[tuple[str, floa
     return list(breakdown.items())[:n]
 
 
-# ── Savings progress ──────────────────────────────────────────────────────────
-
-def savings_progress(transactions: list[dict], cfg: dict) -> dict:
-    goal = cfg.get("savings_goal", 0.0)
-    today = date.today()
-    month_txns = filter_by_period(transactions, "monthly", today)
-    spent = total_spent(month_txns)
-    return {
-        "spent": spent,
-        "goal": goal,
-    }
-
-
 # ── Bar chart helper ──────────────────────────────────────────────────────────
 
 def _bar(value: float, max_value: float, width: int = 30) -> str:
@@ -239,16 +226,3 @@ def view_daily_breakdown(transactions: list[dict]) -> None:
     pause()
 
 
-def view_savings_progress(transactions: list[dict], cfg: dict) -> None:
-    print(header("Savings Progress"))
-    sp = savings_progress(transactions, cfg)
-
-    goal_name = cfg.get("savings_goal_name") or "Savings Goal"
-    print(f"\n  Goal       : {goal_name}")
-    print(f"  Spent      : {fmt_amount(sp['spent'])}")
-
-    if sp["goal"] > 0:
-        print(f"  Target     : {fmt_amount(sp['goal'])}")
-    else:
-        print("\n  (No savings goal set. Use Settings > Update Savings Goal.)")
-    pause()

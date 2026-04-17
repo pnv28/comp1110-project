@@ -17,8 +17,6 @@ BASE = os.path.dirname(os.path.abspath(__file__))
 config = {
     "name": "Alex",
     "university": "HKU",
-    "savings_goal": 1500.0,
-    "savings_goal_name": "Japan trip",
     "categories": [
         "Food & Dining",
         "Transport",

@@ -3,7 +3,7 @@
 from data import load_config, save_config, save_rules, load_rules, save_balances, load_balances
 from utils import (
     header, section, divider, prompt, prompt_required, prompt_float,
-    prompt_yes_no, prompt_int, pause
+    prompt_yes_no, prompt_int, pause, DEFAULT_HINT
 )
 
 DEFAULT_CATEGORIES = [
@@ -40,38 +40,34 @@ def run_setup() -> dict:
   This one-time setup will personalise the app for you.
   You can change any of these settings later from the main menu.
 """)
+    print(DEFAULT_HINT)
+    print()
 
     cfg = load_config()
 
-    # ── Step 1: User name ─────────────────────────────────────────────────────
-    print(section("Step 1 of 5 · Your Profile"))
+    # ── Step 1: Profile ───────────────────────────────────────────────────────
+    print(section("Step 1 · Your Profile"))
     cfg["name"] = prompt_required("Your name")
     cfg["university"] = prompt("University (e.g. HKU, CUHK, PolyU)")
 
-    # ── Step 2: Savings goal ──────────────────────────────────────────────────
-    print(section("Step 2 of 4 · Savings Goal"))
-    has_goal = prompt_yes_no("Do you have a monthly savings target?", default=True)
-    if has_goal:
-        cfg["savings_goal"] = prompt_float("Monthly savings goal (HKD)", min_val=1.0)
-        cfg["savings_goal_name"] = prompt("What are you saving for?",
-                                          default="Emergency fund")
-    else:
-        cfg["savings_goal"] = 0.0
-        cfg["savings_goal_name"] = ""
+    # ── Step 2: Default or custom setup? ─────────────────────────────────────
+    print(section("Step 2 · Setup Style"))
+    print("  Default  — preset categories applied instantly, no extra prompts.")
+    print("  Custom   — you choose every category from scratch.\n")
+    use_all_defaults = prompt_yes_no("Use default setup?", default=True)
 
-    # ── Step 3: Spending categories ───────────────────────────────────────────
-    print(section("Step 3 of 4 · Spending Categories"))
-    print("  Default categories:")
-    for cat in DEFAULT_CATEGORIES:
-        print(f"    • {cat}")
-
-    use_defaults = prompt_yes_no("Use these default categories?", default=True)
-    if use_defaults:
-        categories = list(DEFAULT_CATEGORIES)
+    if use_all_defaults:
+        cfg["categories"]       = list(DEFAULT_CATEGORIES)
+        cfg["want_categories"]  = list(DEFAULT_WANTS)
+        cfg["need_categories"]  = list(DEFAULT_NEEDS)
+        cfg["credit_categories"] = list(DEFAULT_CREDIT_CATEGORIES)
+        print("\n  ✓ Default categories applied.")
     else:
-        categories = []
+        # Custom: spending categories
+        print(section("Spending Categories"))
         print("  Enter categories one per line. Leave blank to finish.")
-        print("  (You must enter at least 3)")
+        print("  (You must enter at least 3)\n")
+        categories = []
         while True:
             cat = prompt(f"Category {len(categories)+1}").strip()
             if not cat:
@@ -83,42 +79,24 @@ def run_setup() -> dict:
             else:
                 categories.append(cat)
 
-    cfg["categories"] = categories
-
-    # ── Step 4b: Want/Need classification ─────────────────────────────────────
-    print("\n  Classify each category as 'want' or 'need':")
-    print("  (This is used for auto-classification; you can always override.)\n")
-    want_set = set()
-    need_set = set()
-    for cat in categories:
-        if cat in DEFAULT_WANTS:
-            suggestion = "want"
-        elif cat in DEFAULT_NEEDS:
-            suggestion = "need"
-        else:
-            suggestion = "want"
-        choice = prompt(f"  '{cat}' — want or need?", default=suggestion).lower().strip()
-        while choice not in ("want", "need", "w", "n"):
+        # Want/need classification
+        print("\n  Classify each as 'want' or 'need' (used when adding transactions):\n")
+        want_set, need_set = set(), set()
+        for cat in categories:
+            suggestion = ("need" if cat in DEFAULT_NEEDS else "want")
             choice = prompt(f"  '{cat}' — want or need?", default=suggestion).lower().strip()
-        if choice in ("want", "w"):
-            want_set.add(cat)
-        else:
-            need_set.add(cat)
+            while choice not in ("want", "need", "w", "n"):
+                choice = prompt(f"  '{cat}' — want or need?", default=suggestion).lower().strip()
+            (want_set if choice in ("want", "w") else need_set).add(cat)
 
-    cfg["want_categories"] = list(want_set)
-    cfg["need_categories"] = list(need_set)
+        cfg["categories"]      = categories
+        cfg["want_categories"] = list(want_set)
+        cfg["need_categories"] = list(need_set)
 
-    # ── Step 3b: Credit (income) categories ──────────────────────────────────
-    print(section("Income Categories"))
-    print("  Default income categories:")
-    for cat in DEFAULT_CREDIT_CATEGORIES:
-        print(f"    • {cat}")
-    use_credit_defaults = prompt_yes_no("Use these default income categories?", default=True)
-    if use_credit_defaults:
-        credit_categories = list(DEFAULT_CREDIT_CATEGORIES)
-    else:
+        # Custom: income categories
+        print(section("Income Categories"))
+        print("  Enter income categories one per line. Leave blank to finish.\n")
         credit_categories = []
-        print("  Enter income categories one per line. Leave blank to finish.")
         while True:
             cat = prompt(f"Income category {len(credit_categories)+1}").strip()
             if not cat:
@@ -129,34 +107,28 @@ def run_setup() -> dict:
                 print("    ! Duplicate, skipping.")
             else:
                 credit_categories.append(cat)
-    cfg["credit_categories"] = credit_categories
+        cfg["credit_categories"] = credit_categories
 
-    # ── Step 4: Budget rules ──────────────────────────────────────────────────
-    print(section("Step 4 of 4 · Budget Limits (optional)"))
-    print("  Set spending limits per category. Press Enter to skip a category.\n")
+    # ── Step 3: Budget limits ─────────────────────────────────────────────────
+    print(section("Step 3 · Budget Limits (optional)"))
+    print("  Set a spending cap per category. Press Enter (N) to skip.\n")
 
     rules = load_rules()
-    existing_cats = {r["category"] for r in rules}
-
-    for cat in categories:
-        skip = not prompt_yes_no(f"Set a budget limit for '{cat}'?", default=False)
-        if skip:
+    for cat in cfg["categories"]:
+        if not prompt_yes_no(f"Set a budget limit for '{cat}'?", default=False):
             continue
-        limit = prompt_float(f"  Limit for '{cat}' (HKD)")
-        period = _prompt_period(f"  Period for '{cat}'")
-        # Remove existing rule for category if present
+        limit = prompt_float(f"Limit for '{cat}' (HKD)")
+        period = _prompt_period(cat)
         rules = [r for r in rules if r["category"] != cat]
         rules.append({"category": cat, "limit_amount": limit, "period": period})
-
     save_rules(rules)
 
-    # ── Accounts / opening balances ───────────────────────────────────────────
-    print(section("Accounts & Opening Balances (optional)"))
-    add_accounts = prompt_yes_no("Set up account names and opening balances?", default=True)
+    # ── Step 4: Accounts ──────────────────────────────────────────────────────
+    print(section("Step 4 · Accounts & Opening Balances"))
     balances = load_balances()
     cfg["accounts"] = []
 
-    if add_accounts:
+    if prompt_yes_no("Set up account names and opening balances?", default=True):
         print("  Common accounts: Octopus, HSBC, PayMe, Alipay HK, Cash")
         print("  Enter account names one per line. Leave blank to finish.\n")
         while True:
@@ -167,33 +139,31 @@ def run_setup() -> dict:
                 print("    ! Duplicate account.")
                 continue
             cfg["accounts"].append(acc)
-            bal = prompt_float(f"  Opening balance for '{acc}' (HKD)", min_val=0.0, default=0.0)
+            bal = prompt_float(f"Opening balance for '{acc}' (HKD)", min_val=0.0, default=0.0)
             balances[acc] = bal
 
     if not cfg["accounts"]:
         cfg["accounts"] = ["Cash", "Bank"]
         balances.setdefault("Cash", 0.0)
         balances.setdefault("Bank", 0.0)
-
     save_balances(balances)
 
     # ── Finish ────────────────────────────────────────────────────────────────
     cfg["setup_complete"] = True
     save_config(cfg)
-
     print(f"\n  Setup complete! Welcome, {cfg['name']}.")
     print(f"  Your data is saved locally — everything stays on your machine.\n")
     pause()
     return cfg
 
 
-def _prompt_period(msg: str) -> str:
-    print(f"  {msg}")
+def _prompt_period(category: str) -> str:
+    print(f"  Period for '{category}':")
     print("    1. Daily")
     print("    2. Weekly")
-    print("    3. Monthly")
+    print("    3. Monthly  ← default (press Enter)")
     while True:
-        raw = input("    Choose [1-3] (default 3): ").strip() or "3"
+        raw = input("    Choose [1-3]: ").strip() or "3"
         if raw == "1":
             return "daily"
         if raw == "2":
@@ -283,13 +253,3 @@ def update_credit_categories(cfg: dict) -> dict:
     return cfg
 
 
-def update_savings_goal(cfg: dict) -> dict:
-    print(header("Update Savings Goal"))
-    cfg["savings_goal"] = prompt_float("Monthly savings goal (HKD, 0 to disable)",
-                                       min_val=0.0, default=cfg.get("savings_goal", 0.0))
-    if cfg["savings_goal"] > 0:
-        cfg["savings_goal_name"] = prompt("What are you saving for?",
-                                           default=cfg.get("savings_goal_name", ""))
-    save_config(cfg)
-    print("  Savings goal updated.")
-    return cfg

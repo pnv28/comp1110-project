@@ -87,12 +87,20 @@ def prompt_date(msg: str, default: str = "") -> date:
             print(f"    ! Enter date as YYYY-MM-DD (e.g. {date.today().strftime(DATE_FMT)}).")
 
 
+DEFAULT_HINT = (
+    "  Tip: Values in [brackets] are defaults — press Enter to accept.\n"
+    "       In Y/n prompts the CAPITAL letter is the default (e.g. Y/n → Enter = Yes)."
+)
+
+
 def prompt_choice(msg: str, options: list[str],
                   default: str = "", allow_new: bool = False) -> str:
     """Present numbered options; return chosen string."""
     print(f"  {msg}")
+    if default in options:
+        print(f"  (Press Enter to select the default marked with ←)")
     for i, opt in enumerate(options, 1):
-        marker = " (default)" if opt == default else ""
+        marker = " ← default" if opt == default else ""
         print(f"    {i}. {opt}{marker}")
     if allow_new:
         print(f"    {len(options)+1}. [Enter new value]")
