@@ -121,6 +121,6 @@ with open(os.path.join(BASE, "transactions.csv"), "w", newline="") as f:
 print("✓ Sample data written:")
 print(f"  config.json       — profile for 'Alex' at HKU")
 print(f"  balances.json     — Octopus / HSBC / Cash")
-print(f"  rules.csv         — 6 budget rules")
-print(f"  transactions.csv  — {len(transactions)} transactions")
+print(f"  rules.csv         — {len(rules)} budget rules")
+print(f"  transactions.csv  — {len(transactions)} transactions ({sum(1 for t in transactions if t['direction'] == 'debit')} debits, {sum(1 for t in transactions if t['direction'] == 'credit')} credits)")
 print("\nRun the app with:  python main.py")
