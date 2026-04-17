@@ -17,7 +17,6 @@ BASE = os.path.dirname(os.path.abspath(__file__))
 config = {
     "name": "Alex",
     "university": "HKU",
-    "monthly_income": 8000.0,
     "savings_goal": 1500.0,
     "savings_goal_name": "Japan trip",
     "categories": [
@@ -38,6 +37,10 @@ config = {
         "Health", "Education", "Utilities",
     ],
     "accounts": ["Octopus", "HSBC", "Cash"],
+    "credit_categories": [
+        "Salary", "Allowance", "Part-time Work",
+        "Gift", "Refund", "Investment Return", "Other Income",
+    ],
     "setup_complete": True,
 }
 
@@ -78,38 +81,42 @@ def d(offset: int) -> str:
     return (today - timedelta(days=offset)).strftime("%Y-%m-%d")
 
 transactions = [
-    # ── This month (recent) ───────────────────────────────────────────────────
-    {"date": d(0),  "amount": "42.00",  "category": "Food & Dining",  "account": "Octopus", "description": "Canteen lunch",        "type": "need"},
-    {"date": d(1),  "amount": "280.00", "category": "Shopping",        "account": "HSBC",    "description": "New clothes – H&M",    "type": "want"},
-    {"date": d(1),  "amount": "38.50",  "category": "Transport",       "account": "Octopus", "description": "MTR weekly top-up",    "type": "need"},
-    {"date": d(2),  "amount": "65.00",  "category": "Food & Dining",   "account": "Cash",    "description": "Hotpot with friends",  "type": "need"},
-    {"date": d(2),  "amount": "120.00", "category": "Social",          "account": "HSBC",    "description": "Birthday dinner",      "type": "want"},
-    {"date": d(3),  "amount": "55.00",  "category": "Entertainment",   "account": "HSBC",    "description": "Netflix + Spotify",    "type": "want"},
-    {"date": d(4),  "amount": "48.00",  "category": "Food & Dining",   "account": "Octopus", "description": "Breakfast + coffee",   "type": "need"},
-    {"date": d(5),  "amount": "22.50",  "category": "Transport",       "account": "Octopus", "description": "Bus pass",             "type": "need"},
-    {"date": d(5),  "amount": "350.00", "category": "Education",       "account": "HSBC",    "description": "Textbooks – semester", "type": "need"},
-    {"date": d(6),  "amount": "89.00",  "category": "Food & Dining",   "account": "Cash",    "description": "Weekend brunch",       "type": "need"},
-    {"date": d(7),  "amount": "200.00", "category": "Shopping",        "account": "HSBC",    "description": "Running shoes",        "type": "want"},
-    {"date": d(7),  "amount": "75.00",  "category": "Social",          "account": "Cash",    "description": "Bar tab",              "type": "want"},
-    {"date": d(8),  "amount": "150.00", "category": "Entertainment",   "account": "HSBC",    "description": "Concert tickets",      "type": "want"},
-    {"date": d(9),  "amount": "62.00",  "category": "Food & Dining",   "account": "Octopus", "description": "Sushi lunch",          "type": "need"},
-    {"date": d(10), "amount": "30.00",  "category": "Health",          "account": "HSBC",    "description": "Pharmacy – cold meds", "type": "need"},
-    {"date": d(11), "amount": "44.00",  "category": "Food & Dining",   "account": "Octopus", "description": "Campus canteen",       "type": "need"},
-    {"date": d(12), "amount": "180.00", "category": "Utilities",       "account": "HSBC",    "description": "Phone bill",           "type": "need"},
-    {"date": d(13), "amount": "95.00",  "category": "Social",          "account": "HSBC",    "description": "Karaoke night",        "type": "want"},
-    {"date": d(14), "amount": "520.00", "category": "Shopping",        "account": "HSBC",    "description": "AirPods (sale)",       "type": "want"},
+    # ── This month (recent) — debits ─────────────────────────────────────────
+    {"date": d(0),  "amount": "42.00",  "category": "Food & Dining",  "account": "Octopus", "description": "Canteen lunch",        "type": "need",  "direction": "debit"},
+    {"date": d(1),  "amount": "280.00", "category": "Shopping",        "account": "HSBC",    "description": "New clothes – H&M",    "type": "want",  "direction": "debit"},
+    {"date": d(1),  "amount": "38.50",  "category": "Transport",       "account": "Octopus", "description": "MTR weekly top-up",    "type": "need",  "direction": "debit"},
+    {"date": d(2),  "amount": "65.00",  "category": "Food & Dining",   "account": "Cash",    "description": "Hotpot with friends",  "type": "need",  "direction": "debit"},
+    {"date": d(2),  "amount": "120.00", "category": "Social",          "account": "HSBC",    "description": "Birthday dinner",      "type": "want",  "direction": "debit"},
+    {"date": d(3),  "amount": "55.00",  "category": "Entertainment",   "account": "HSBC",    "description": "Netflix + Spotify",    "type": "want",  "direction": "debit"},
+    {"date": d(4),  "amount": "48.00",  "category": "Food & Dining",   "account": "Octopus", "description": "Breakfast + coffee",   "type": "need",  "direction": "debit"},
+    {"date": d(5),  "amount": "22.50",  "category": "Transport",       "account": "Octopus", "description": "Bus pass",             "type": "need",  "direction": "debit"},
+    {"date": d(5),  "amount": "350.00", "category": "Education",       "account": "HSBC",    "description": "Textbooks – semester", "type": "need",  "direction": "debit"},
+    {"date": d(6),  "amount": "89.00",  "category": "Food & Dining",   "account": "Cash",    "description": "Weekend brunch",       "type": "need",  "direction": "debit"},
+    {"date": d(7),  "amount": "200.00", "category": "Shopping",        "account": "HSBC",    "description": "Running shoes",        "type": "want",  "direction": "debit"},
+    {"date": d(7),  "amount": "75.00",  "category": "Social",          "account": "Cash",    "description": "Bar tab",              "type": "want",  "direction": "debit"},
+    {"date": d(8),  "amount": "150.00", "category": "Entertainment",   "account": "HSBC",    "description": "Concert tickets",      "type": "want",  "direction": "debit"},
+    {"date": d(9),  "amount": "62.00",  "category": "Food & Dining",   "account": "Octopus", "description": "Sushi lunch",          "type": "need",  "direction": "debit"},
+    {"date": d(10), "amount": "30.00",  "category": "Health",          "account": "HSBC",    "description": "Pharmacy – cold meds", "type": "need",  "direction": "debit"},
+    {"date": d(11), "amount": "44.00",  "category": "Food & Dining",   "account": "Octopus", "description": "Campus canteen",       "type": "need",  "direction": "debit"},
+    {"date": d(12), "amount": "180.00", "category": "Utilities",       "account": "HSBC",    "description": "Phone bill",           "type": "need",  "direction": "debit"},
+    {"date": d(13), "amount": "95.00",  "category": "Social",          "account": "HSBC",    "description": "Karaoke night",        "type": "want",  "direction": "debit"},
+    {"date": d(14), "amount": "520.00", "category": "Shopping",        "account": "HSBC",    "description": "AirPods (sale)",       "type": "want",  "direction": "debit"},
+    # ── This month — credits ──────────────────────────────────────────────────
+    {"date": d(3),  "amount": "5000.00","category": "Allowance",       "account": "HSBC",    "description": "Monthly allowance",    "type": "",      "direction": "credit"},
+    {"date": d(8),  "amount": "800.00", "category": "Part-time Work",  "account": "HSBC",    "description": "Tutoring sessions",    "type": "",      "direction": "credit"},
     # ── Previous month ────────────────────────────────────────────────────────
-    {"date": d(32), "amount": "1800.00","category": "Housing",         "account": "HSBC",    "description": "Monthly rent",         "type": "need"},
-    {"date": d(33), "amount": "55.00",  "category": "Transport",       "account": "Octopus", "description": "MTR top-up",           "type": "need"},
-    {"date": d(35), "amount": "480.00", "category": "Food & Dining",   "account": "HSBC",    "description": "Groceries (month)",    "type": "need"},
-    {"date": d(38), "amount": "310.00", "category": "Entertainment",   "account": "HSBC",    "description": "Theme park – Ocean Pk","type": "want"},
-    {"date": d(40), "amount": "120.00", "category": "Health",          "account": "HSBC",    "description": "Doctor visit + meds",  "type": "need"},
-    {"date": d(45), "amount": "250.00", "category": "Shopping",        "account": "HSBC",    "description": "Winter jacket",        "type": "want"},
+    {"date": d(32), "amount": "1800.00","category": "Housing",         "account": "HSBC",    "description": "Monthly rent",         "type": "need",  "direction": "debit"},
+    {"date": d(33), "amount": "55.00",  "category": "Transport",       "account": "Octopus", "description": "MTR top-up",           "type": "need",  "direction": "debit"},
+    {"date": d(35), "amount": "480.00", "category": "Food & Dining",   "account": "HSBC",    "description": "Groceries (month)",    "type": "need",  "direction": "debit"},
+    {"date": d(38), "amount": "310.00", "category": "Entertainment",   "account": "HSBC",    "description": "Theme park – Ocean Pk","type": "want",  "direction": "debit"},
+    {"date": d(40), "amount": "120.00", "category": "Health",          "account": "HSBC",    "description": "Doctor visit + meds",  "type": "need",  "direction": "debit"},
+    {"date": d(45), "amount": "250.00", "category": "Shopping",        "account": "HSBC",    "description": "Winter jacket",        "type": "want",  "direction": "debit"},
+    {"date": d(35), "amount": "5000.00","category": "Allowance",       "account": "HSBC",    "description": "Monthly allowance",    "type": "",      "direction": "credit"},
 ]
 
 with open(os.path.join(BASE, "transactions.csv"), "w", newline="") as f:
     writer = csv.DictWriter(
-        f, fieldnames=["date","amount","category","account","description","type"])
+        f, fieldnames=["date", "amount", "category", "account", "description", "type", "direction"])
     writer.writeheader()
     writer.writerows(transactions)
 

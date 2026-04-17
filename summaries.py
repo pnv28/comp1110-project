@@ -101,18 +101,13 @@ def top_categories(transactions: list[dict], n: int = 3) -> list[tuple[str, floa
 # ── Savings progress ──────────────────────────────────────────────────────────
 
 def savings_progress(transactions: list[dict], cfg: dict) -> dict:
-    income = cfg.get("monthly_income", 0.0)
     goal = cfg.get("savings_goal", 0.0)
     today = date.today()
     month_txns = filter_by_period(transactions, "monthly", today)
     spent = total_spent(month_txns)
-    saved = max(income - spent, 0.0)
     return {
-        "income": income,
         "spent": spent,
-        "saved": saved,
         "goal": goal,
-        "on_track": saved >= goal if goal > 0 else None,
     }
 
 
@@ -170,12 +165,6 @@ def _print_period_report(transactions: list[dict], cfg: dict, label: str) -> Non
     print(f"  Total spent        : {fmt_amount(total)}")
     print(f"  Wants              : {fmt_amount(wants)}")
     print(f"  Needs              : {fmt_amount(needs)}")
-
-    income = cfg.get("monthly_income", 0.0)
-    if income > 0:
-        remaining = income - total
-        sign = "+" if remaining >= 0 else ""
-        print(f"  Remaining budget   : {sign}{fmt_amount(remaining)}")
 
     if breakdown:
         print(section("Category Breakdown"))
@@ -256,19 +245,10 @@ def view_savings_progress(transactions: list[dict], cfg: dict) -> None:
 
     goal_name = cfg.get("savings_goal_name") or "Savings Goal"
     print(f"\n  Goal       : {goal_name}")
-    print(f"  Income     : {fmt_amount(sp['income'])}")
     print(f"  Spent      : {fmt_amount(sp['spent'])}")
-    print(f"  Saved      : {fmt_amount(sp['saved'])}")
 
     if sp["goal"] > 0:
-        pct = min(sp["saved"] / sp["goal"] * 100, 100)
-        bar = _bar(sp["saved"], sp["goal"], width=30)
-        print(f"  Progress   : {bar} {pct:.1f}%")
-        if sp["on_track"]:
-            print("\n  ✓ On track to meet your savings goal this month!")
-        else:
-            shortfall = sp["goal"] - sp["saved"]
-            print(f"\n  ✗ {fmt_amount(shortfall)} below your savings goal.")
+        print(f"  Target     : {fmt_amount(sp['goal'])}")
     else:
         print("\n  (No savings goal set. Use Settings > Update Savings Goal.)")
     pause()

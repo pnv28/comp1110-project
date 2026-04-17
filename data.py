@@ -13,7 +13,7 @@ RULES_FILE = os.path.join(BASE_DIR, "rules.csv")
 BALANCES_FILE = os.path.join(BASE_DIR, "balances.json")
 CONFIG_FILE = os.path.join(BASE_DIR, "config.json")
 
-TRANSACTION_FIELDS = ["date", "amount", "category", "account", "description", "type"]
+TRANSACTION_FIELDS = ["date", "amount", "category", "account", "description", "type", "direction"]
 RULE_FIELDS = ["category", "limit_amount", "period"]
 
 # ── Config ────────────────────────────────────────────────────────────────────
@@ -46,6 +46,7 @@ def _parse_transaction(row: dict) -> dict:
         "account": row["account"],
         "description": row.get("description", ""),
         "type": row.get("type", ""),
+        "direction": row.get("direction", "debit"),
     }
 
 
@@ -75,6 +76,7 @@ def save_transactions(transactions: list[dict]) -> None:
                 "account": t["account"],
                 "description": t.get("description", ""),
                 "type": t.get("type", ""),
+                "direction": t.get("direction", "debit"),
             })
 
 

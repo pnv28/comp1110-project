@@ -19,6 +19,16 @@ DEFAULT_CATEGORIES = [
     "Other",
 ]
 
+DEFAULT_CREDIT_CATEGORIES = [
+    "Salary",
+    "Allowance",
+    "Part-time Work",
+    "Gift",
+    "Refund",
+    "Investment Return",
+    "Other Income",
+]
+
 DEFAULT_WANTS = {"Entertainment", "Shopping", "Social"}
 DEFAULT_NEEDS = {"Food & Dining", "Transport", "Housing", "Health", "Education", "Utilities"}
 
@@ -38,13 +48,8 @@ def run_setup() -> dict:
     cfg["name"] = prompt_required("Your name")
     cfg["university"] = prompt("University (e.g. HKU, CUHK, PolyU)")
 
-    # ── Step 2: Monthly income / allowance ────────────────────────────────────
-    print(section("Step 2 of 5 · Monthly Income / Allowance"))
-    print("  Enter 0 if you prefer not to set this.")
-    cfg["monthly_income"] = prompt_float("Monthly income or allowance (HKD)", min_val=0.0, default=0.0)
-
-    # ── Step 3: Savings goal ──────────────────────────────────────────────────
-    print(section("Step 3 of 5 · Savings Goal"))
+    # ── Step 2: Savings goal ──────────────────────────────────────────────────
+    print(section("Step 2 of 4 · Savings Goal"))
     has_goal = prompt_yes_no("Do you have a monthly savings target?", default=True)
     if has_goal:
         cfg["savings_goal"] = prompt_float("Monthly savings goal (HKD)", min_val=1.0)
@@ -54,8 +59,8 @@ def run_setup() -> dict:
         cfg["savings_goal"] = 0.0
         cfg["savings_goal_name"] = ""
 
-    # ── Step 4: Spending categories ───────────────────────────────────────────
-    print(section("Step 4 of 5 · Spending Categories"))
+    # ── Step 3: Spending categories ───────────────────────────────────────────
+    print(section("Step 3 of 4 · Spending Categories"))
     print("  Default categories:")
     for cat in DEFAULT_CATEGORIES:
         print(f"    • {cat}")
@@ -103,8 +108,31 @@ def run_setup() -> dict:
     cfg["want_categories"] = list(want_set)
     cfg["need_categories"] = list(need_set)
 
-    # ── Step 5: Budget rules ──────────────────────────────────────────────────
-    print(section("Step 5 of 5 · Budget Limits (optional)"))
+    # ── Step 3b: Credit (income) categories ──────────────────────────────────
+    print(section("Income Categories"))
+    print("  Default income categories:")
+    for cat in DEFAULT_CREDIT_CATEGORIES:
+        print(f"    • {cat}")
+    use_credit_defaults = prompt_yes_no("Use these default income categories?", default=True)
+    if use_credit_defaults:
+        credit_categories = list(DEFAULT_CREDIT_CATEGORIES)
+    else:
+        credit_categories = []
+        print("  Enter income categories one per line. Leave blank to finish.")
+        while True:
+            cat = prompt(f"Income category {len(credit_categories)+1}").strip()
+            if not cat:
+                if len(credit_categories) >= 1:
+                    break
+                print("    ! Enter at least 1 category.")
+            elif cat in credit_categories:
+                print("    ! Duplicate, skipping.")
+            else:
+                credit_categories.append(cat)
+    cfg["credit_categories"] = credit_categories
+
+    # ── Step 4: Budget rules ──────────────────────────────────────────────────
+    print(section("Step 4 of 4 · Budget Limits (optional)"))
     print("  Set spending limits per category. Press Enter to skip a category.\n")
 
     rules = load_rules()
@@ -218,6 +246,39 @@ def update_categories(cfg: dict) -> dict:
     cfg["categories"] = cats
     cfg["want_categories"] = list(wants)
     cfg["need_categories"] = list(needs)
+    save_config(cfg)
+    return cfg
+
+
+def update_credit_categories(cfg: dict) -> dict:
+    """Allow user to add/remove income (credit) categories interactively."""
+    print(header("Manage Income Categories"))
+    cats = list(cfg.get("credit_categories", list(DEFAULT_CREDIT_CATEGORIES)))
+
+    while True:
+        print("\n  Current income categories:")
+        for i, c in enumerate(cats, 1):
+            print(f"    {i}. {c}")
+        print("\n  Options:")
+        print("    a) Add category")
+        print("    r) Remove category")
+        print("    d) Done")
+        choice = input("  > ").strip().lower()
+
+        if choice == "a":
+            name = prompt_required("New income category name")
+            if name in cats:
+                print("    ! Already exists.")
+            else:
+                cats.append(name)
+        elif choice == "r":
+            idx = prompt_int("Remove category number", 1, len(cats)) - 1
+            removed = cats.pop(idx)
+            print(f"    Removed '{removed}'.")
+        elif choice == "d":
+            break
+
+    cfg["credit_categories"] = cats
     save_config(cfg)
     return cfg
 

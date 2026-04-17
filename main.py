@@ -88,9 +88,9 @@ def settings_menu(cfg: dict, rules: list[dict],
                   transactions: list[dict]) -> tuple[dict, list[dict]]:
     while True:
         print(header("Settings"))
-        print("  1. Manage categories")
-        print("  2. Update savings goal")
-        print("  3. Update monthly income")
+        print("  1. Manage debit categories")
+        print("  2. Manage income (credit) categories")
+        print("  3. Update savings goal")
         print("  4. Manage budget rules")
         print("  5. Re-run first-time setup")
         print("  6. Back")
@@ -98,13 +98,9 @@ def settings_menu(cfg: dict, rules: list[dict],
         if choice == "1":
             cfg = setup_module.update_categories(cfg)
         elif choice == "2":
-            cfg = setup_module.update_savings_goal(cfg)
+            cfg = setup_module.update_credit_categories(cfg)
         elif choice == "3":
-            cfg["monthly_income"] = prompt_float(
-                "Monthly income/allowance (HKD, 0 to disable)",
-                min_val=0.0, default=cfg.get("monthly_income", 0.0))
-            save_config(cfg)
-            print("  Income updated.")
+            cfg = setup_module.update_savings_goal(cfg)
         elif choice == "4":
             rules = manage_rules_menu(rules, transactions, cfg)
         elif choice == "5":
@@ -158,15 +154,10 @@ def print_dashboard(cfg: dict, transactions: list[dict],
     from transactions import filter_by_period, total_spent
     month_txns = filter_by_period(transactions, "monthly", today)
     month_total = total_spent(month_txns)
-    income = cfg.get("monthly_income", 0.0)
 
     print(f"  This month")
     print(f"    Transactions   : {len(month_txns)}")
     print(f"    Total spent    : {fmt_amount(month_total)}")
-    if income > 0:
-        remaining = income - month_total
-        sign = "+" if remaining >= 0 else ""
-        print(f"    Remaining      : {sign}{fmt_amount(remaining)}")
 
     # Active rule breaches
     alerts = check_rules(transactions, rules)
