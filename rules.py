@@ -19,22 +19,51 @@ def check_rules(transactions: list[dict],
                 ref_date: date | None = None) -> list[dict]:
     """
     Return a list of alert dicts for any breached rules.
-    Each alert: {category, limit, period, spent, overspent}
+    Alert types: "cap" (limit exceeded), "pct_threshold" (>30% of period
+    total), "uncategorized" (transactions with no meaningful category).
     """
     alerts = []
     today = ref_date or date.today()
+
     for rule in rules:
         cat_txns = filter_by_category(transactions, rule["category"])
         period_txns = filter_by_period(cat_txns, rule["period"], today)
         spent = total_spent(period_txns)
+
+        # Cap breach: spending exceeded the rule's hard limit.
         if spent > rule["limit_amount"]:
             alerts.append({
+                "type": "cap",
                 "category": rule["category"],
                 "limit": rule["limit_amount"],
                 "period": rule["period"],
                 "spent": spent,
                 "overspent": round(spent - rule["limit_amount"], 2),
             })
+
+        # Percentage threshold: this category accounts for >30% of all
+        # spending in the same period, which may signal runaway spending
+        # even when the absolute cap hasn't been breached.
+        all_period_txns = filter_by_period(transactions, rule["period"], today)
+        total_period = total_spent(all_period_txns)
+        if total_period > 0 and spent / total_period > 0.30:
+            alerts.append({
+                "type": "pct_threshold",
+                "category": rule["category"],
+                "period": rule["period"],
+                "spent": spent,
+                "pct": round(spent / total_period * 100, 1),
+            })
+
+    # Uncategorized warning: always run, no rule required.
+    uncategorized = [t for t in transactions
+                     if t.get("category", "") in ("Other", "")]
+    if uncategorized:
+        alerts.append({
+            "type": "uncategorized",
+            "count": len(uncategorized),
+        })
+
     return alerts
 
 
@@ -46,11 +75,21 @@ def print_alerts(alerts: list[dict]) -> None:
     print("  ⚠  BUDGET ALERT")
     print("!" * 60)
     for a in alerts:
-        print(f"\n  Category : {a['category']}")
-        print(f"  Period   : {a['period'].capitalize()}")
-        print(f"  Limit    : {fmt_amount(a['limit'])}")
-        print(f"  Spent    : {fmt_amount(a['spent'])}")
-        print(f"  Overspent: {fmt_amount(a['overspent'])}  ← over budget!")
+        alert_type = a.get("type", "cap")
+        if alert_type == "pct_threshold":
+            print(f"\n  Category : {a['category']}")
+            print(f"  Period   : {a['period'].capitalize()}")
+            print(f"  Spent    : {fmt_amount(a['spent'])}  ({a['pct']}% of period total)")
+            print(f"             ← exceeds 30% of all spending this period")
+        elif alert_type == "uncategorized":
+            print(f"\n  {a['count']} transaction(s) are uncategorized (\"Other\" or blank).")
+            print(f"  Categorise them for accurate budget reports.")
+        else:  # cap breach
+            print(f"\n  Category : {a['category']}")
+            print(f"  Period   : {a['period'].capitalize()}")
+            print(f"  Limit    : {fmt_amount(a['limit'])}")
+            print(f"  Spent    : {fmt_amount(a['spent'])}")
+            print(f"  Overspent: {fmt_amount(a['overspent'])}  ← over budget!")
     print("\n" + "!" * 60)
 
 

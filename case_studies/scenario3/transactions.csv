@@ -1,0 +1,16 @@
+date,amount,category,account,description,type,direction
+2026-04-01,2000.00,Allowance,HSBC,Monthly allowance,, credit
+2026-04-01,68.00,Subscriptions,HSBC,Netflix monthly (student plan),want,debit
+2026-04-01,45.00,Subscriptions,HSBC,Spotify Premium,want,debit
+2026-04-01,38.00,Subscriptions,HSBC,iCloud 200GB family share,want,debit
+2026-04-01,320.00,Subscriptions,HSBC,Gym membership (monthly),want,debit
+2026-04-01,25.00,Subscriptions,HSBC,YouTube Premium,want,debit
+2026-04-01,58.00,,HSBC,Some app charge,want,debit
+2026-04-03,42.00,Food & Dining,Octopus,Canteen meals,need,debit
+2026-04-05,18.00,Transport,Octopus,MTR rides,need,debit
+2026-04-07,35.00,Food & Dining,Octopus,Canteen meals,need,debit
+2026-04-08,88.00,Other,HSBC,Unknown charge from last month,want,debit
+2026-04-10,120.00,Other,HSBC,Adobe Creative Cloud,want,debit
+2026-04-12,40.00,Food & Dining,Octopus,Canteen meals,need,debit
+2026-04-14,15.00,Transport,Octopus,Bus rides,need,debit
+2026-04-15,55.00,Entertainment,Cash,Escape room,want,debit

@@ -1,0 +1,14 @@
+date,amount,category,account,description,type,direction
+2026-04-10,3000.00,Allowance,HSBC,Monthly allowance received late,,credit
+2026-04-10,200.00,Part-time Work,Cash,Tutoring session payment,,credit
+2026-04-11,45.00,Food & Dining,Octopus,Canteen meals,need,debit
+2026-04-11,12.00,Transport,Octopus,MTR to campus,need,debit
+2026-04-12,38.00,Food & Dining,Octopus,Canteen lunch + dinner,need,debit
+2026-04-12,650.00,Housing,HSBC,Hall fee instalment,need,debit
+2026-04-13,52.00,Food & Dining,Cash,Dinner out with groupmates,need,debit
+2026-04-13,18.00,Transport,Octopus,Bus + MTR,need,debit
+2026-04-14,0.01,Food & Dining,Octopus,Vending machine water,need,debit
+2026-04-15,42.00,Food & Dining,Octopus,Canteen meals,need,debit
+2026-04-15,25.00,Entertainment,Cash,Board game cafe,want,debit
+2026-04-16,80.00,Shopping,HSBC,Stationery + charger cable,want,debit
+2026-04-17,35.00,Food & Dining,Octopus,Canteen meals,need,debit

@@ -161,3 +161,18 @@ All prompts validate input and re-ask on bad values — the app will never crash
 - Amounts must be numeric and meet the minimum (usually > 0)
 - Menu choices must be a listed number
 - Required fields (e.g. name) cannot be left blank
+
+---
+
+## Case Studies
+
+The `case_studies/` folder contains sample input files for four test scenarios used to evaluate the system:
+
+| Folder | Scenario |
+|---|---|
+| `scenario1/` | Daily food budget — HKD 50/day cap, tests daily alert firing |
+| `scenario2/` | Monthly transport tracker — HKD 600/month cap, tests credit exclusion |
+| `scenario3/` | Subscription creep — tests cap breach, % threshold, and uncategorized alerts |
+| `scenario4/` | Zero spending edge case — late allowance, tests zero-spend summaries and credit handling |
+
+To run a scenario, copy its `transactions.csv` and `rules.csv` into the project root, run `python seed_data.py` to set up config and balances, then run `python main.py`.

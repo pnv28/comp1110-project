@@ -8,5 +8,5 @@ transactions.csv
 rules.csv
 balances.json
 
-# Internal documentation
-documentation.md
+# Allow case study data files even though root CSVs are ignored
+!case_studies/**/*.csv

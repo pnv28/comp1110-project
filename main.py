@@ -162,14 +162,21 @@ def print_dashboard(cfg: dict, transactions: list[dict],
 
     # Budget rule alerts
     alerts = check_rules(transactions, rules)
+    cap_alerts = [a for a in alerts if a.get("type", "cap") == "cap"]
+    pct_alerts = [a for a in alerts if a.get("type") == "pct_threshold"]
+    unc_alerts = [a for a in alerts if a.get("type") == "uncategorized"]
     print()
-    if alerts:
-        print(f"  ⚠  Budget breaches ({len(alerts)}):")
-        for a in alerts:
+    if cap_alerts:
+        print(f"  ⚠  Budget breaches ({len(cap_alerts)}):")
+        for a in cap_alerts:
             print(f"    • {a['category']:<20} over by {fmt_amount(a['overspent'])}"
                   f"  [{a['period']}]")
     else:
         print(f"  ✓  All budget rules within limits.")
+    for a in pct_alerts:
+        print(f"  ⚠  {a['category']} is {a['pct']}% of {a['period']} spending (>30%)")
+    for a in unc_alerts:
+        print(f"  ⚠  {a['count']} uncategorized transaction(s) — consider updating them")
 
 
 
