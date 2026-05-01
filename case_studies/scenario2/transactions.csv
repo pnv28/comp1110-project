@@ -1,5 +1,5 @@
 date,amount,category,account,description,type,direction
-2026-04-01,500.00,Allowance,HSBC,Monthly allowance from parents,, credit
+2026-04-01,500.00,Allowance,HSBC,Monthly allowance from parents,,credit
 2026-04-01,15.50,Transport,Octopus,MTR to Causeway Bay,need,debit
 2026-04-02,18.00,Transport,Octopus,MTR round trip HKU to Mong Kok,need,debit
 2026-04-03,12.00,Transport,Octopus,Bus to Sai Wan Ho,need,debit

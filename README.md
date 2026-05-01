@@ -3,6 +3,9 @@
 A text-based personal budget and spending tracker built for university students in Hong Kong.
 Runs entirely in the terminal. All data is stored locally in CSV and JSON files — nothing leaves your machine.
 
+**COMP1110 Group Project — Topic A: Personal Budget and Spending Assistant**
+School of Computing and Data Science, The University of Hong Kong, Semester 2 2025–2026
+
 ---
 
 ## Requirements
@@ -12,37 +15,70 @@ Runs entirely in the terminal. All data is stored locally in CSV and JSON files 
 
 ---
 
-## Quick Start
+## How to Run
 
-**1. Seed sample data (optional but recommended for first-time exploration):**
+### Option 1 — Explore with sample data (recommended for TAs)
+
 ```bash
 python seed_data.py
+python main.py
 ```
-Writes a sample profile, balances, 6 budget rules, and 27 transactions (mix of debits and credits) so you can explore all features immediately.
 
-**2. Launch the app:**
+`seed_data.py` writes a sample profile, balances, 6 budget rules, and 27 transactions so all features are immediately visible without manual entry.
+
+### Option 2 — Fresh start
+
 ```bash
 python main.py
 ```
-If no config file exists, the setup wizard runs automatically before showing the main menu.
+
+The setup wizard launches automatically on first run. Follow the prompts to configure your profile, categories, budget rules, and account balances.
 
 ---
 
-## First-Time Setup
+## Running the Test Cases
 
-The setup wizard runs once on first launch (or any time you choose "Re-run first-time setup" from Settings). Steps:
+```bash
+python test_cases.py
+```
 
-1. **Your profile** — name and university
-2. **Setup style** — choose between:
-   - **Default** — preset categories applied instantly, no further prompts
-   - **Custom** — you enter every debit category, classify each as want/need, and enter income categories from scratch
-3. **Budget limits** (optional) — set a spending cap per category with a daily, weekly, or monthly period
-4. **Accounts & opening balances** — name your accounts (e.g. Octopus, HSBC, Cash) and set their current balances
+Runs 12 documented test cases covering normal flows and edge cases. All should print `[PASS]`.
 
-All settings can be updated later from the **Settings** menu.
+---
 
-> **Tip:** Values shown in `[brackets]` are defaults — press Enter to accept.
-> In `Y/n` prompts the **CAPITAL** letter is the default (e.g. `Y/n` → Enter = Yes).
+## Reproducing the Case Studies
+
+Each case study has its own folder under `case_studies/` containing a `transactions.csv` and `rules.csv`.
+
+**Steps to reproduce any scenario:**
+
+```bash
+# 1. Copy the scenario files into the project root (replace existing files)
+cp case_studies/scenario1/transactions.csv .
+cp case_studies/scenario1/rules.csv .
+
+# 2. Set up a matching config and balances
+python seed_data.py
+
+# 3. Run the app
+python main.py
+```
+
+Replace `scenario1` with `scenario2`, `scenario3`, or `scenario4` as needed.
+
+| Folder | Scenario | Key feature tested |
+|---|---|---|
+| `scenario1/` | Daily food budget — HKD 50/day cap | Daily cap alert, want/need split |
+| `scenario2/` | Monthly transport tracker — HKD 600/month | Credit exclusion from totals, % threshold alert |
+| `scenario3/` | Subscription creep detection | Cap breach + % threshold + uncategorized alert firing together |
+| `scenario4/` | Zero spending edge case + late allowance | Zero-spend summaries, credit handling, minimum-value transaction |
+
+**What to check on the dashboard for each scenario:**
+
+- `scenario1` — Food & Dining percentage alert (92.4% of spending)
+- `scenario2` — Transport percentage alert (67.0% of spending), no cap breach yet
+- `scenario3` — Subscriptions cap breach (over by HKD 96), 51.3% alert, 3 uncategorized warnings
+- `scenario4` — Housing percentage alert (65.2%), credits excluded from HKD 997.01 total
 
 ---
 
@@ -60,74 +96,6 @@ All settings can be updated later from the **Settings** menu.
 
 ---
 
-### Adding a Transaction
-
-First choose the transaction type:
-- **Debit (expenditure)** — money going out; uses your spending categories
-- **Credit (income)** — money coming in; uses your income categories
-
-Then fill in:
-| Field | Notes |
-|---|---|
-| Date | Defaults to today (`YYYY-MM-DD`) |
-| Amount | HKD, must be > 0 |
-| Category | Choose from your list or enter a new one |
-| Account | Choose from your accounts or enter a new one |
-| Description | Optional free-text note |
-| Want / Need | Debit only — auto-classified from setup; you can override |
-
-On save the account balance updates automatically (debit subtracts, credit adds) and all budget rules are checked immediately.
-
----
-
-### Summaries & Reports
-
-| Option | What it shows |
-|---|---|
-| Period summary | Total spent, want/need split, category breakdown with bar chart for any date range |
-| 7-day trend | Last 7 days vs previous 7 days with % change and per-category bars |
-| Monthly history | Total spending per calendar month with bar chart |
-| Daily breakdown | Day-by-day spending for the current month |
-| Recent transactions | Last 10 / 20 / 30 / all transactions |
-
----
-
-### Budget Rules
-
-Each rule defines a spending cap for a category over a daily, weekly, or monthly period.
-
-| Option | Description |
-|---|---|
-| View all rules | Shows limit, period, and current status for every rule |
-| Add / update rule | Set or overwrite a rule for any category |
-| Remove rule | Delete a rule |
-| Check current status | Table: spent vs limit vs remaining for every rule right now |
-
-A breach warning prints automatically after any transaction that pushes a category over its limit. The dashboard also shows active breaches every time you return to the main menu.
-
----
-
-### Account Balances
-
-Displays each account with its current balance and a total. Balances update automatically whenever a transaction is saved.
-
-### Manual Balance Adjustment
-
-Set an account's balance directly without creating a transaction record. Use this to correct drift (e.g. after a bank transfer, ATM withdrawal, or interest credit).
-
----
-
-### Settings
-
-| Option | Description |
-|---|---|
-| Manage debit categories | Add or remove spending categories |
-| Manage income (credit) categories | Add or remove income categories |
-| Manage budget rules | Full rules menu |
-| Re-run first-time setup | Walks through setup again; existing transaction data is kept |
-
----
-
 ## File Reference
 
 | File | Purpose |
@@ -137,9 +105,10 @@ Set an account's balance directly without creating a transaction record. Use thi
 | `transactions.py` | Transaction logic: add-transaction flow, want/need classification, all filter/query functions. |
 | `summaries.py` | Statistics and reporting: category breakdowns, trend analysis, monthly/daily totals, all report views. |
 | `rules.py` | Budget rule engine: checks rules against transaction data, prints alerts, manages the rules menu. |
-| `setup.py` | First-run wizard and post-setup helpers (`update_categories`, `update_credit_categories`). |
+| `setup.py` | First-run wizard and post-setup helpers. |
 | `utils.py` | Shared helpers: validated input prompts, amount/date formatting, terminal output utilities. |
-| `seed_data.py` | One-time data seeder. Safe to delete after use. |
+| `seed_data.py` | One-time data seeder for exploration. Safe to delete after use. |
+| `test_cases.py` | 12 documented automated test cases. Run with `python test_cases.py`. |
 
 ---
 
@@ -152,27 +121,27 @@ Set an account's balance directly without creating a transaction record. Use thi
 | `rules.csv` | CSV | Budget rules: category, limit amount, period |
 | `balances.json` | JSON | Current balance per account |
 
+These files are excluded from the repository via `.gitignore` as they contain personal runtime data. They are generated automatically on first run or by `seed_data.py`.
+
 ---
 
 ## Input Validation
 
 All prompts validate input and re-ask on bad values — the app will never crash from invalid input:
 - Dates must be `YYYY-MM-DD`
-- Amounts must be numeric and meet the minimum (usually > 0)
+- Amounts must be numeric and greater than 0
 - Menu choices must be a listed number
-- Required fields (e.g. name) cannot be left blank
+- Required fields cannot be left blank
+- Malformed rows in CSV files are silently skipped on load
 
 ---
 
-## Case Studies
+## Alert Types
 
-The `case_studies/` folder contains sample input files for four test scenarios used to evaluate the system:
+The rule engine supports three alert types, all visible on the main menu dashboard:
 
-| Folder | Scenario |
+| Alert | Trigger |
 |---|---|
-| `scenario1/` | Daily food budget — HKD 50/day cap, tests daily alert firing |
-| `scenario2/` | Monthly transport tracker — HKD 600/month cap, tests credit exclusion |
-| `scenario3/` | Subscription creep — tests cap breach, % threshold, and uncategorized alerts |
-| `scenario4/` | Zero spending edge case — late allowance, tests zero-spend summaries and credit handling |
-
-To run a scenario, copy its `transactions.csv` and `rules.csv` into the project root, run `python seed_data.py` to set up config and balances, then run `python main.py`.
+| Cap breach | Category spending exceeds its defined daily/weekly/monthly limit |
+| Percentage threshold | A category exceeds 30% of total spending in the current period |
+| Uncategorized warning | One or more transactions have a blank or "Other" category |
